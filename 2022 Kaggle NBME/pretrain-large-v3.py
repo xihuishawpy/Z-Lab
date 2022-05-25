@@ -167,4 +167,4 @@ trainer = Trainer(
 
 
 trainer.train()
-trainer.save_model(f'./nbme_deberta_v3_large_pretrain')
+trainer.save_model('./nbme_deberta_v3_large_pretrain')

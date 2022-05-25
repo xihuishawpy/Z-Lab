@@ -50,11 +50,11 @@ feats += ['sec',
           'ts_diff2',
           ]
 
+vec_size = 6
 for name in ['auth_type']:
     df[name+'_fillna'] = df[name].astype('str')
     sent = df.groupby(['user_name', 'year', 'month', 'day'])[name+'_fillna'].agg(list).values
 
-    vec_size = 6
     w2v_model = Word2Vec(sentences=sent, vector_size=vec_size, window=12, min_count=1, workers=1)
     tmp = df[name+'_fillna'].map(lambda x: w2v_model.wv[x])
     tmp = pd.DataFrame(list(tmp))

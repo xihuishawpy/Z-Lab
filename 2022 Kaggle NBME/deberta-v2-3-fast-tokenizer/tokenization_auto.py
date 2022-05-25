@@ -455,9 +455,9 @@ class AutoTokenizer:
 
             if tokenizer_class_tuple is None:
                 raise ValueError(
-                    f"Passed `tokenizer_type` {tokenizer_type} does not exist. `tokenizer_type` should be one of "
-                    f"{', '.join(c for c in TOKENIZER_MAPPING_NAMES.keys())}."
+                    f"Passed `tokenizer_type` {tokenizer_type} does not exist. `tokenizer_type` should be one of {', '.join(TOKENIZER_MAPPING_NAMES.keys())}."
                 )
+
 
             tokenizer_class_name, tokenizer_fast_class_name = tokenizer_class_tuple
 
@@ -510,8 +510,12 @@ class AutoTokenizer:
 
                 module_file, class_name = class_ref.split(".")
                 tokenizer_class = get_class_from_dynamic_module(
-                    pretrained_model_name_or_path, module_file + ".py", class_name, **kwargs
+                    pretrained_model_name_or_path,
+                    f"{module_file}.py",
+                    class_name,
+                    **kwargs,
                 )
+
 
             elif use_fast and not config_tokenizer_class.endswith("Fast"):
                 tokenizer_class_candidate = f"{config_tokenizer_class}Fast"
@@ -543,21 +547,20 @@ class AutoTokenizer:
             tokenizer_class_py, tokenizer_class_fast = TOKENIZER_MAPPING[type(config)]
             if tokenizer_class_fast and (use_fast or tokenizer_class_py is None):
                 return tokenizer_class_fast.from_pretrained(pretrained_model_name_or_path, *inputs, **kwargs)
-            else:
-                if tokenizer_class_py is not None:
-                    return tokenizer_class_py.from_pretrained(pretrained_model_name_or_path, *inputs, **kwargs)
-                else:
-                    raise ValueError(
-                        "This tokenizer cannot be instantiated. Please make sure you have `sentencepiece` installed "
-                        "in order to use this tokenizer."
-                    )
+            if tokenizer_class_py is None:
+                raise ValueError(
+                    "This tokenizer cannot be instantiated. Please make sure you have `sentencepiece` installed "
+                    "in order to use this tokenizer."
+                )
 
+            else:
+                return tokenizer_class_py.from_pretrained(pretrained_model_name_or_path, *inputs, **kwargs)
         raise ValueError(
             f"Unrecognized configuration class {config.__class__} to build an AutoTokenizer.\n"
             f"Model type should be one of {', '.join(c.__name__ for c in TOKENIZER_MAPPING.keys())}."
         )
 
-    def register(config_class, slow_tokenizer_class=None, fast_tokenizer_class=None):
+    def register(self, slow_tokenizer_class=None, fast_tokenizer_class=None):
         """
         Register a new tokenizer in this mapping.
 
@@ -591,11 +594,11 @@ class AutoTokenizer:
             )
 
         # Avoid resetting a set slow/fast tokenizer if we are passing just the other ones.
-        if config_class in TOKENIZER_MAPPING._extra_content:
-            existing_slow, existing_fast = TOKENIZER_MAPPING[config_class]
+        if self in TOKENIZER_MAPPING._extra_content:
+            existing_slow, existing_fast = TOKENIZER_MAPPING[self]
             if slow_tokenizer_class is None:
                 slow_tokenizer_class = existing_slow
             if fast_tokenizer_class is None:
                 fast_tokenizer_class = existing_fast
 
-        TOKENIZER_MAPPING.register(config_class, (slow_tokenizer_class, fast_tokenizer_class))
+        TOKENIZER_MAPPING.register(self, (slow_tokenizer_class, fast_tokenizer_class))

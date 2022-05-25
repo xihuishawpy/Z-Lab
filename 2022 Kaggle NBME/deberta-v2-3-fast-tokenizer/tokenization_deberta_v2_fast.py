@@ -147,7 +147,7 @@ class DebertaV2TokenizerFast(PreTrainedTokenizerFast):
 
         self.do_lower_case = do_lower_case
         self.vocab_file = vocab_file
-        self.can_save_slow_tokenizer = False if not self.vocab_file else True
+        self.can_save_slow_tokenizer = bool(self.vocab_file)
 
     def build_inputs_with_special_tokens(self, token_ids_0, token_ids_1=None):
         """
@@ -238,8 +238,11 @@ class DebertaV2TokenizerFast(PreTrainedTokenizerFast):
             logger.error(f"Vocabulary path ({save_directory}) should be a directory")
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (f"{filename_prefix}-" if filename_prefix else "")
+            + VOCAB_FILES_NAMES["vocab_file"],
         )
+
 
         if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file):
             copyfile(self.vocab_file, out_vocab_file)

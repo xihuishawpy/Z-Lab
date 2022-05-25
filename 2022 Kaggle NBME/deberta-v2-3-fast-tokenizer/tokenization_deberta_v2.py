@@ -255,7 +255,7 @@ class DebertaV2Tokenizer(PreTrainedTokenizer):
     def prepare_for_tokenization(self, text, is_split_into_words=False, **kwargs):
         add_prefix_space = kwargs.pop("add_prefix_space", False)
         if is_split_into_words or add_prefix_space:
-            text = " " + text
+            text = f" {text}"
         return (text, kwargs)
 
     def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
@@ -325,36 +325,28 @@ class SPMTokenizer:
         pieces = self._encode_as_pieces(text)
 
         def _norm(x):
-            if x not in self.vocab or x == "<unk>":
-                return "[UNK]"
-            else:
-                return x
+            return "[UNK]" if x not in self.vocab or x == "<unk>" else x
 
         pieces = [_norm(p) for p in pieces]
         return pieces
 
     def convert_ids_to_tokens(self, ids):
-        tokens = []
-        for i in ids:
-            tokens.append(self.ids_to_tokens[i])
-        return tokens
+        return [self.ids_to_tokens[i] for i in ids]
 
     def decode(self, tokens, start=-1, end=-1, raw_text=None):
         if raw_text is None:
-            return self.spm.decode_pieces([t for t in tokens])
-        else:
-            words = self.split_to_words(raw_text)
-            word_tokens = [self.tokenize(w) for w in words]
-            token2words = [0] * len(tokens)
-            tid = 0
-            for i, w in enumerate(word_tokens):
-                for k, t in enumerate(w):
-                    token2words[tid] = i
-                    tid += 1
-            word_start = token2words[start]
-            word_end = token2words[end] if end < len(tokens) else len(words)
-            text = "".join(words[word_start:word_end])
-            return text
+            return self.spm.decode_pieces(list(tokens))
+        words = self.split_to_words(raw_text)
+        word_tokens = [self.tokenize(w) for w in words]
+        token2words = [0] * len(tokens)
+        tid = 0
+        for i, w in enumerate(word_tokens):
+            for _ in w:
+                token2words[tid] = i
+                tid += 1
+        word_start = token2words[start]
+        word_end = token2words[end] if end < len(tokens) else len(words)
+        return "".join(words[word_start:word_end])
 
     def add_special_token(self, token):
         if token not in self.special_tokens:
@@ -399,12 +391,11 @@ class SPMTokenizer:
 
     def _encode_as_pieces(self, text):
         text = convert_to_unicode(text)
-        if self.split_by_punct:
-            words = self._run_split_on_punc(text)
-            pieces = [self.spm.encode(w, out_type=str) for w in words]
-            return [p for w in pieces for p in w]
-        else:
+        if not self.split_by_punct:
             return self.spm.encode(text, out_type=str)
+        words = self._run_split_on_punc(text)
+        pieces = [self.spm.encode(w, out_type=str) for w in words]
+        return [p for w in pieces for p in w]
 
     def split_to_words(self, text):
         pieces = self._encode_as_pieces(text)
@@ -430,10 +421,7 @@ class SPMTokenizer:
                         break
                     k += 1
 
-                if len(pn) > 0 and pn in text[offset:s]:
-                    offset = offset + 1
-                else:
-                    offset = s + len(w)
+                offset = offset + 1 if len(pn) > 0 and pn in text[offset:s] else s + len(w)
             except Exception:
                 offset = offset + 1
 
@@ -476,7 +464,7 @@ class SPMTokenizer:
     def save_pretrained(self, path: str, filename_prefix: str = None):
         filename = VOCAB_FILES_NAMES[list(VOCAB_FILES_NAMES.keys())[0]]
         if filename_prefix is not None:
-            filename = filename_prefix + "-" + filename
+            filename = f"{filename_prefix}-{filename}"
         full_path = os.path.join(path, filename)
         with open(full_path, "wb") as fs:
             fs.write(self.spm.serialized_model_proto())
@@ -487,7 +475,7 @@ def _is_whitespace(char):
     """Checks whether `chars` is a whitespace character."""
     # \t, \n, and \r are technically control characters but we treat them
     # as whitespace since they are generally considered as such.
-    if char == " " or char == "\t" or char == "\n" or char == "\r":
+    if char in [" ", "\t", "\n", "\r"]:
         return True
     cat = unicodedata.category(char)
     if cat == "Zs":
@@ -499,7 +487,7 @@ def _is_control(char):
     """Checks whether `chars` is a control character."""
     # These are technically control characters but we count them as whitespace
     # characters.
-    if char == "\t" or char == "\n" or char == "\r":
+    if char in ["\t", "\n", "\r"]:
         return False
     cat = unicodedata.category(char)
     if cat.startswith("C"):
