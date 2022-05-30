@@ -8,7 +8,7 @@ from sklearn.metrics import roc_auc_score
 import json
 from gensim.models.word2vec import Word2Vec
 
-df_train = pd.read_csv('data/train_dataset.csv', sep='\t')
+df_train = pd.read_csv('./data/train_dataset.csv', sep='\t')
 
 df_test = pd.read_csv('data/test_dataset.csv', sep='\t')
 sub = pd.read_csv('data/submit_example.csv')
@@ -23,6 +23,8 @@ feats = ['user_name', 'action', 'auth_type', 'ip_location_type_keyword', 'ip_ris
          'device_model', 'os_type', 'os_version', 'browser_type', 'browser_version', 'bus_system_code', 'op_target',
          'location_first_lvl', 'location_sec_lvl', 'location_third_lvl',
          ]
+
+print(len(feats))
 
 cat = []
 
@@ -151,3 +153,7 @@ sub['ret'] = pred_y
 
 sub[['id', 'ret']].to_csv('ans/lgb_5285.csv', index=False)
 # df_train.to_csv('train.csv')
+
+
+
+
