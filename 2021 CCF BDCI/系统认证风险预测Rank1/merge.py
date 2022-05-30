@@ -7,7 +7,6 @@ ans2 = pd.read_csv('results/lgb_5272.csv')  # 嘴爷5272
 ans3 = pd.read_csv('results/submit28.csv')  # 小渡
 ans4 = pd.read_csv('results/sub_5225.csv')  # 老肥
 
-
 ans = pd.DataFrame()
 # ans['ans1'] = ans1['ret'].rank()
 # ans['ans2'] = ans2['ret'].rank()
