@@ -2,10 +2,10 @@ import pandas as pd
 from matplotlib.pyplot import plot, show
 from seaborn import heatmap
 
-ans1 = pd.read_csv('ans/lgb_5285.csv')  # 嘴爷5285
-ans2 = pd.read_csv('ans/lgb_5272.csv')  # 嘴爷5272
-ans3 = pd.read_csv('ans/submit28.csv')  # 小渡
-ans4 = pd.read_csv('ans/sub_5225.csv')  # 老肥
+ans1 = pd.read_csv('.results/lgb_5285.csv')  # 嘴爷5285
+ans2 = pd.read_csv('results/lgb_5272.csv')  # 嘴爷5272
+ans3 = pd.read_csv('results/submit28.csv')  # 小渡
+ans4 = pd.read_csv('results/sub_5225.csv')  # 老肥
 
 
 ans = pd.DataFrame()
