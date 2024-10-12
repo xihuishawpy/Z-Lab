@@ -45,11 +45,10 @@ class SentencePieceExtractor:
 
         # Merges
         merges = []
-        for piece_l in vocab.keys():
-            for piece_r in vocab.keys():
+        for piece_l in vocab:
+            for piece_r in vocab:
                 merge = f"{piece_l}{piece_r}"
-                piece_id = vocab.get(merge, None)
-                if piece_id:
+                if piece_id := vocab.get(merge, None):
                     merges += [(piece_l, piece_r, piece_id)]
         merges = sorted(merges, key=lambda val: val[2])
         merges = [(val[0], val[1]) for val in merges]
@@ -462,12 +461,16 @@ class SpmConverter(Converter):
 
     def normalizer(self, proto):
         precompiled_charsmap = proto.normalizer_spec.precompiled_charsmap
-        if not precompiled_charsmap:
-            return normalizers.Sequence([normalizers.Replace(Regex(" {2,}"), " ")])
-        else:
-            return normalizers.Sequence(
-                [normalizers.Precompiled(precompiled_charsmap), normalizers.Replace(Regex(" {2,}"), " ")]
+        return (
+            normalizers.Sequence(
+                [
+                    normalizers.Precompiled(precompiled_charsmap),
+                    normalizers.Replace(Regex(" {2,}"), " "),
+                ]
             )
+            if precompiled_charsmap
+            else normalizers.Sequence([normalizers.Replace(Regex(" {2,}"), " ")])
+        )
 
     def pre_tokenizer(self, replacement, add_prefix_space):
         return pre_tokenizers.Metaspace(replacement=replacement, add_prefix_space=add_prefix_space)
@@ -485,8 +488,7 @@ class SpmConverter(Converter):
         add_prefix_space = True
         tokenizer.pre_tokenizer = self.pre_tokenizer(replacement, add_prefix_space)
         tokenizer.decoder = decoders.Metaspace(replacement=replacement, add_prefix_space=add_prefix_space)
-        post_processor = self.post_processor()
-        if post_processor:
+        if post_processor := self.post_processor():
             tokenizer.post_processor = post_processor
 
         return tokenizer
@@ -528,8 +530,7 @@ class AlbertConverter(SpmConverter):
 
 class BarthezConverter(SpmConverter):
     def unk_id(self, proto):
-        unk_id = 3
-        return unk_id
+        return 3
 
     def post_processor(self):
         return processors.TemplateProcessing(
@@ -666,8 +667,7 @@ class XLMRobertaConverter(SpmConverter):
         return vocab
 
     def unk_id(self, proto):
-        unk_id = 3
-        return unk_id
+        return 3
 
     def post_processor(self):
         return processors.TemplateProcessing(
@@ -825,8 +825,7 @@ class DebertaV2Converter(SpmConverter):
         if self.original_tokenizer.do_lower_case:
             list_normalizers.append(normalizers.Lowercase())
 
-        precompiled_charsmap = proto.normalizer_spec.precompiled_charsmap
-        if precompiled_charsmap:
+        if precompiled_charsmap := proto.normalizer_spec.precompiled_charsmap:
             list_normalizers.append(normalizers.Precompiled(precompiled_charsmap))
         list_normalizers.append(normalizers.Replace(Regex(" {2,}"), " "))
 

@@ -53,7 +53,10 @@ for f in ['ip', 'location', 'device_model', 'os_version', 'browser_version']:
 
 for method in ['mean', 'max', 'min', 'std', 'sum', 'median','prod']:
     for col in ['user_name', 'ip', 'location', 'device_model', 'os_version', 'browser_version']:
-        data[f'ts_diff1_{method}_' + str(col)] = data.groupby(col)['ts_diff1'].transform(method)
+        data[f'ts_diff1_{method}_{str(col)}'] = data.groupby(col)[
+            'ts_diff1'
+        ].transform(method)
+
 
 # 
 
@@ -112,26 +115,26 @@ def lgb_model(data_, test_, y_):
                 eval_set= [(trn_x, trn_y), (val_x, val_y)],categorical_feature=cat_feats,
                 eval_metric='auc', verbose=100, early_stopping_rounds=40  #30
                )
-        
+
         vfunc = np.vectorize(lambda x:(x-minmin)/(maxmax-minmin))
         oof_preds[val_idx] = clf.predict_proba(val_x, num_iteration=clf.best_iteration_)[:, 1]
         minmin= min(oof_preds[val_idx])
         maxmax= max(oof_preds[val_idx])
         oof_preds[val_idx] = vfunc(oof_preds[val_idx])
-        
+
 
         sub_preds += clf.predict_proba(test_, num_iteration=clf.best_iteration_)[:, 1] / folds_.n_splits
         minmin= min(sub_preds)
         maxmax= max(sub_preds)
         sub_preds = vfunc(sub_preds)
-        
+
         df_importance = pd.DataFrame({
             'column': feature_names,
             'importance': clf.feature_importances_,
         })
         df_importance_list.append(df_importance)
-        joblib.dump(clf, './model/lgb_'+ str(n_fold) +'.pkl')   
-        print('Fold %2d AUC : %.6f' % (n_fold + 1, roc_auc_score(val_y, oof_preds[val_idx])))   
+        joblib.dump(clf, f'./model/lgb_{str(n_fold)}.pkl')
+        print('Fold %2d AUC : %.6f' % (n_fold + 1, roc_auc_score(val_y, oof_preds[val_idx])))
     score  = roc_auc_score(y_, oof_preds)
     print('Full AUC score %.6f' % score) 
 
@@ -139,7 +142,7 @@ def lgb_model(data_, test_, y_):
     df_importance = df_importance.groupby(['column'])['importance'].agg(
         'mean').sort_values(ascending=False).reset_index()
     print(df_importance)
-    
+
     return oof_preds, sub_preds
 
 lgb_train, lgb_test = lgb_model(x_train, x_test, y_train)

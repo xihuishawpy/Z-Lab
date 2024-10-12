@@ -332,10 +332,9 @@ def span_micro_f1(preds, truths):
 
 def create_labels_for_scoring(df):
     # example: ['0 1', '3 4'] -> ['0 1; 3 4']
-    df['location_for_create_labels'] = [ast.literal_eval(f'[]')] * len(df)
+    df['location_for_create_labels'] = [ast.literal_eval('[]')] * len(df)
     for i in range(len(df)):
-        lst = df.loc[i, 'location']
-        if lst:
+        if lst := df.loc[i, 'location']:
             new_lst = ';'.join(lst)
             df.loc[i, 'location_for_create_labels'] = ast.literal_eval(f'[["{new_lst}"]]')
     # create labels
@@ -352,10 +351,9 @@ def create_labels_for_scoring(df):
 
 def create_labels_for_scoring_test(df):
     # example: ['0 1', '3 4'] -> ['0 1; 3 4']
-    df['location_for_create_labels'] = [ast.literal_eval(f'[]')] * len(df)
+    df['location_for_create_labels'] = [ast.literal_eval('[]')] * len(df)
     for i in range(len(df)):
-        lst = df.loc[i, 'location']
-        if lst:
+        if lst := df.loc[i, 'location']:
             new_lst = ';'.join(lst)
             df.loc[i, 'location_for_create_labels'] = ast.literal_eval(f'[["{new_lst}"]]')
     # create labels
@@ -378,7 +376,7 @@ def get_char_probs(texts, predictions, tokenizer):
         encoded = tokenizer(text,
                             add_special_tokens=True,
                             return_offsets_mapping=True)
-        for idx, (offset_mapping, pred) in enumerate(zip(encoded['offset_mapping'], prediction)):
+        for offset_mapping, pred in zip(encoded['offset_mapping'], prediction):
             start = offset_mapping[0]
             end = offset_mapping[1]
             results[i][start:end] = pred
@@ -391,9 +389,8 @@ def get_results(char_probs, th=0.5, texts=None):
         result = np.where(char_prob >= th)[0] + 1
         result = [list(g) for _, g in itertools.groupby(result, key=lambda n, c=itertools.count(): n - next(c))]
 
-        if len(result) > 0:
-            if result[0][0] == 1:
-                result[0][0] = 0
+        if result and result[0][0] == 1:
+            result[0][0] = 0
 
         te = texts[idx]
         encoded = CFG.tokenizer(te,
@@ -401,7 +398,7 @@ def get_results(char_probs, th=0.5, texts=None):
                                   return_offsets_mapping=True)
 
         result_new = []
-        if len(result) > 0:
+        if result:
             for r in result:
                 str_tmp = te[min(r):max(r)]
 
@@ -456,9 +453,8 @@ def get_results_test(char_probs, th=0.5, labels=None, texts=None, df_in=None,pre
         te = texts[idx]
 
 
-        if len(result) > 0:
-            if result[0][0] == 1:
-                result[0][0] = 0
+        if result and result[0][0] == 1:
+            result[0][0] = 0
 
 
         encoded = CFG.tokenizer(te,
@@ -481,7 +477,7 @@ def get_results_test(char_probs, th=0.5, labels=None, texts=None, df_in=None,pre
         #                 t_tmp.append(tt+1)
         #         result_new.append(t_tmp)
         result_new  = []
-        if len(result) > 0:
+        if result:
             for r in result:
                 pos_b = min(r)
                 if pos_b > 0:
@@ -571,8 +567,7 @@ def get_predictions(results):
 # Utils
 # ====================================================
 def get_score(y_true, y_pred):
-    score = span_micro_f1(y_true, y_pred)
-    return score
+    return span_micro_f1(y_true, y_pred)
 
 
 def get_logger(filename=OUTPUT_DIR + 'train'):
